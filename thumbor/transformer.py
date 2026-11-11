@@ -284,8 +284,13 @@ class Transformer:
             > self.target_height / source_height
         ):
             crop_width = source_width
-            crop_height = int(
-                round(source_width * self.target_height / target_width, 0)
+            crop_height = max(
+                1,
+                int(
+                    round(
+                        source_width * self.target_height / target_width, 0
+                    )
+                ),
             )
         else:
             crop_width = int(
@@ -386,6 +391,11 @@ class Transformer:
         ):
             return
 
+        # a side can round down to 0 in the proportional fallback, so keep
+        # both targets at least 1 pixel before dividing by them
+        self.target_width = max(1, self.target_width)
+        self.target_height = max(1, self.target_height)
+
         # add 1e-5 to get .5 rounding up in Python3 as it was in Python2
         if (
             source_width / self.target_width * sign
@@ -400,6 +410,11 @@ class Transformer:
             resize_width = round(
                 source_width * self.target_height / source_height + 1e-5
             )
+
+        # a computed side can round down to 0 for very wide or very tall
+        # sources, so keep both sides at least 1 pixel
+        resize_width = max(1, resize_width)
+        resize_height = max(1, resize_height)
 
         # ensure that filter should work on the real image size
         # and not on the request size which might be smaller than the
